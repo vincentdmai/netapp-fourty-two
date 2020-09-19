@@ -1,9 +1,4 @@
-#file to import for the api key info
-
-#twitter keys
-twitter_api_key = 'PTQMO3qOyC7suPTbmyI4kVOEj'
-twitter_secret_api_key = 'ufwlwY4rOd9KQK8RNImSOl1UdjTBGw9q1gi9L53gkBOIduqbYu'
-twitter_bearer_token = 'AAAAAAAAAAAAAAAAAAAAAHZuHwEAAAAAgpNYgEH0%2BDsFLwxLSxxWuIH3y08%3D9bh52qCUdNgDLZlVQ0u0KQlTfheLhgyaEXKTM59DahsZgWAMmr'
+#Keys for Server
 
 #wolfram alpha key
 wolfram_app_id = '68XQ8G-KHAHAHUJQ3'
@@ -15,4 +10,3 @@ watson_iam_apikey_name = "Auto-generated service credentials"
 watson_iam_role_crn = "crn:v1:bluemix:public:iam::::serviceRole:Manager"
 watson_iam_serviceid_crn = "crn:v1:bluemix:public:iam-identity::a/8684a4937b414c1880a682b6e6e64f2c::serviceid:ServiceId-e63b5f20-fbf0-418e-bf7a-dc1a64f57016"
 watson_url = "https://api.us-south.text-to-speech.watson.cloud.ibm.com/instances/68ae020d-b5f4-4779-9b79-34a4f24b527a"
-
