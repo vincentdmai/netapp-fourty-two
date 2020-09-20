@@ -30,11 +30,12 @@ class StreamListener(tweepy.streaming.StreamListener):
         #Creating decryption
         key = Fernet.generate_key()
         cipher_suite = Fernet(key)
-        cipher_text = cipher_suite.encrypt(bytes(tweet_question))
+        cipher_text = cipher_suite.encrypt(tweet_question.encode('utf-8'))
         #plain_text = cipher_suite.decrypt(cipher_text)
-        md5Hash = hashlib.md5(bytes(cipher_text)) #md5 Hash
+        md5Hash = hashlib.md5(cipher_text) #md5 Hash
         #creating pickled payload
-        msg = pickle.dump((key, cipher_text, md5Hash))
+        print(key, cipher_text, md5Hash.digest())
+        msg = pickle.dumps((key, cipher_text, md5Hash.digest()))
 
         #Connecting to server and sending payload
         s.connect((serverIP, serverPort))

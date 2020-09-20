@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 
 import sys
+import socket
+import pickle
+from cryptography.fernet import Fernet
+import hashlib
+
 
 
 """
@@ -15,13 +20,26 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 def runServer():
     #Binding port to host
     s.bind((serverIP, serverPort))
-
+    s.listen()
     while 1:
         client, address = s.accept()
-        data = client.recv(socketSize)
-        print(b'Received from client: ' + data)    
+        data = client.recv(socketSize)   
         if data:
-            client.send(data)
+            #Recieving the payload
+            key, cipher_text, md5Hash = pickle.loads(data)
+            #Check sum
+            newmd5Hash = hashlib.md5(cipher_text) #md5 Hash
+            if newmd5Hash.digest() != md5Hash:
+                print('Check Sum failed')
+
+            #Reverseing the encription on the cipher text
+            cipher_suite = Fernet(key)
+            plain_text = cipher_suite.decrypt(cipher_text)
+
+            #Decoding for raw string
+            plain_text = plain_text.decode('utf-8')
+            print(new)
+            #client.send(data)
         client.close()
 
 
@@ -38,7 +56,7 @@ if __name__ == '__main__':
         # Iterate through the command line arguments and check if valid parameter flags
         for i, arg in enumerate(sys.argv):
             if (i + 1 < len(sys.argv)):
-                elif arg == '-sp':
+                if arg == '-sp':
                     serverPort = int(sys.argv[i+1])
                 elif arg == '-z':
                     socketSize = int(sys.argv[i+1])
