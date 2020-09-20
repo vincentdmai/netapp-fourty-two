@@ -38,7 +38,7 @@ if __name__ == '__main__':
         # Iterate through the command line arguments and check if valid parameter flags
         for i, arg in enumerate(sys.argv):
             if (i + 1 < len(sys.argv)):
-                elif arg == '-sp':
+                if arg == '-sp':
                     serverPort = int(sys.argv[i+1])
                 elif arg == '-z':
                     socketSize = int(sys.argv[i+1])
