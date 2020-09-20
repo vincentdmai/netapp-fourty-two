@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 
+import ServerKeys as sk
 import sys
 import socket
 import pickle
-from cryptography.fernet import Fernet
 import hashlib
+import json
+import simpleaudio as sa
+from os.path import join, dirname 
+from cryptography.fernet import Fernet
+from ibm_watson import TextToSpeechV1, ApiException
+from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 
 
 
@@ -16,6 +22,15 @@ serverIP = ''
 serverPort = None
 socketSize = None
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+
+#Connecting to IBM Watson
+#Creating the autehtication for IBM Watson
+authenticator = IAMAuthenticator(sk.watson_api_key)
+text_to_speech = TextToSpeechV1(authenticator=authenticator)
+
+#Connecnting to URL server
+text_to_speech.set_service_url(sk.watson_url)
 
 def runServer():
     #Binding port to host
@@ -38,7 +53,24 @@ def runServer():
 
             #Decoding for raw string
             plain_text = plain_text.decode('utf-8')
-            print(new)
+
+            #Creating Audio file name
+            audioFile = 'outputServer.wav'
+            #Tries to use IBM watson to create audio file
+            try:
+                with open(join(dirname(__file__), audioFile), 'wb') as audio_file:
+                    response = text_to_speech.synthesize(plain_text, accept='audio/wav', voice="en-US_AllisonVoice").get_result()
+                    audio_file.write(response.content)
+            #Will throw out error on temrinal if it fails
+            except ApiException as ex:
+                    print("Method failed with status code " + str(ex.code) + ": " + ex.message)
+
+            #Inits the audio object and plays, and waits till audio file is done
+            wave_obj = sa.WaveObject.from_wave_file(audioFile)
+            play_obj = wave_obj.play()
+            play_obj.wait_done() 
+
+            # TODO check the send data back to client
             #client.send(data)
         client.close()
 
