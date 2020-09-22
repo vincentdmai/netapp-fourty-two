@@ -7,6 +7,7 @@ import pickle
 import hashlib
 import json
 import simpleaudio as sa
+import wolframalpha
 from os.path import join, dirname 
 from cryptography.fernet import Fernet
 from ibm_watson import TextToSpeechV1, ApiException
@@ -31,6 +32,20 @@ text_to_speech = TextToSpeechV1(authenticator=authenticator)
 
 #Connecnting to URL server
 text_to_speech.set_service_url(sk.watson_url)
+
+#Using the wolfram alpha api to get an answer to our question
+def wolfram_get_answer(question):
+    #Creating a client object using the wolframalpha python library
+    client = wolframalpha.Client(sk.wolfram_app_id)
+
+    #Generating a results object from the client
+    client_results = client.query(question)
+
+    #Getting the answer to our question in plaintext 
+    answer = next(client_results.results).text
+
+    #Returning a string of our answer
+    return answer
 
 def runServer():
     #Binding port to host
@@ -78,7 +93,7 @@ def runServer():
 if __name__ == '__main__':
     # Parse the Command Line Server Info
     # Call Method that takes it in
-
+    
     # Check correct number of parameters in command line
     if (len(sys.argv) != 5):
         print('ERROR: FAILURE TO INITIALIZE CLIENT')
@@ -100,4 +115,5 @@ if __name__ == '__main__':
 
         #Run Server
         runServer()
+    
         
