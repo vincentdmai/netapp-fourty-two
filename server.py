@@ -5,7 +5,6 @@ import sys
 import socket
 import pickle
 import hashlib
-import json
 import simpleaudio as sa
 import wolframalpha
 from os.path import join, dirname 
@@ -19,7 +18,7 @@ from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 *** GLOBALS ****
 """
 
-serverIP = ''
+serverIP = '127.0.0.1'
 serverPort = None
 socketSize = None
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -47,16 +46,21 @@ def wolfram_get_answer(question):
     #Returning a string of our answer
     return answer
 
-def runServer():
+def run_server():
     #Binding port to host
     s.bind((serverIP, serverPort))
+    print("Created socket at " + serverIP + " on port " + str(serverPort))
     s.listen()
+    print("Listening for client connections")
     while 1:
         client, address = s.accept()
-        data = client.recv(socketSize)   
+        print("Accepted client connection from " + str(address) + " on port " + str(client.getsockname()))
+        data = client.recv(socketSize)
+        print("Received data: " + str(data))   
         if data:
             #Recieving the payload
             key, cipher_text, md5Hash = pickle.loads(data)
+            print("Decrypt Key: " + str(key))
             #Check sum
             newmd5Hash = hashlib.md5(cipher_text) #md5 Hash
             if newmd5Hash.digest() != md5Hash:
@@ -68,7 +72,8 @@ def runServer():
 
             #Decoding for raw string
             plain_text = plain_text.decode('utf-8')
-
+            print("Plain Text: " + plain_text)
+            
             #Creating Audio file name
             audioFile = 'outputServer.wav'
             #Tries to use IBM watson to create audio file
@@ -82,11 +87,31 @@ def runServer():
 
             #Inits the audio object and plays, and waits till audio file is done
             wave_obj = sa.WaveObject.from_wave_file(audioFile)
+            print("Speaking Question: " + plain_text)
             play_obj = wave_obj.play()
             play_obj.wait_done() 
 
-            # TODO check the send data back to client
-            #client.send(data)
+            #Using Wolfram Alpha to generate an answer string from question
+            print("Sending question to Wolframalpha")
+            ans = wolfram_get_answer(plain_text)
+            print("Received answer from Wolframalpha: " + str(ans))
+
+            #Creating encryption
+            answer_key = Fernet.generate_key()
+            print("Encryption key: " + str(answer_key))
+            answer_cipher_suite = Fernet(answer_key)
+            answer_cipher_text = answer_cipher_suite.encrypt(ans.encode('utf-8'))
+            print("Cipher Text: " + str(answer_cipher_text))
+            #plain_text = cipher_suite.decrypt(cipher_text)
+            answer_md5Hash = hashlib.md5(answer_cipher_text) #md5 Hash
+            print("Generated MD5 Checksum: " + str(answer_md5Hash.digest()))
+            #creating pickled payload
+            print("Answer payload: " + str(answer_cipher_text))
+            msg = pickle.dumps((answer_key, answer_cipher_text, answer_md5Hash.digest()))
+            print("Sending answer: " + str(msg))
+
+            #Send data back to client
+            client.send(bytes(msg))
         client.close()
 
 
@@ -114,6 +139,6 @@ if __name__ == '__main__':
             sys.exit()
 
         #Run Server
-        runServer()
+        run_server()
     
         
