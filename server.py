@@ -18,10 +18,12 @@ from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 *** GLOBALS ****
 """
 
-serverIP = '127.0.0.1'
+serverIP = '192.168.0.121'
 serverPort = None
 socketSize = None
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#Allows us to use same port and address
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
 
 #Connecting to IBM Watson
@@ -34,27 +36,28 @@ text_to_speech.set_service_url(sk.watson_url)
 
 #Using the wolfram alpha api to get an answer to our question
 def wolfram_get_answer(question):
-    #Creating a client object using the wolframalpha python library
-    client = wolframalpha.Client(sk.wolfram_app_id)
+    try:
+        #Creating a client object using the wolframalpha python library
+        client = wolframalpha.Client(sk.wolfram_app_id)
 
-    #Generating a results object from the client
-    client_results = client.query(question)
+        #Generating a results object from the client
+        client_results = client.query(question)
 
-    #Getting the answer to our question in plaintext 
-    answer = next(client_results.results).text
+        #Getting the answer to our question in plaintext 
+        answer = next(client_results.results).text
+    except AttributeError as ex:
+        print('Current question payload has no results attribute on Wolfram Alpha')
+        return 'Invalid Question. Please make sure question is answerable on Wolfram Alpha.'
 
     #Returning a string of our answer
     return answer
 
 def run_server():
-    #Binding port to host
-    s.bind((serverIP, serverPort))
-    print("Created socket at " + serverIP + " on port " + str(serverPort))
     s.listen()
     print("Listening for client connections")
+    client, address = s.accept()
+    print("Accepted client connection from " + str(address) + " on port " + str(client.getsockname()))
     while 1:
-        client, address = s.accept()
-        print("Accepted client connection from " + str(address) + " on port " + str(client.getsockname()))
         data = client.recv(socketSize)
         print("Received data: " + str(data))   
         if data:
@@ -112,7 +115,8 @@ def run_server():
 
             #Send data back to client
             client.send(bytes(msg))
-        client.close()
+        print('Server successfully send data back to Client.')
+        #client.close()
 
 
 if __name__ == '__main__':
@@ -137,6 +141,10 @@ if __name__ == '__main__':
         if not serverPort or not socketSize:
             print('ERROR: INVALID ARGUMENT FLAGS. Specify -sp <SERVER_PORT> -z <SOCKET_SIZE>.')
             sys.exit()
+
+        #Binding port to host
+        s.bind((serverIP, serverPort))
+        print("Created socket at " + serverIP + " on port " + str(serverPort))
 
         #Run Server
         run_server()

@@ -21,6 +21,8 @@ serverIP = None
 serverPort = None
 socketSize = None
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#Allows us to use same port and address
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
 #Connecting to IBM Watson
 #Creating the autehtication for IBM Watson
@@ -33,8 +35,6 @@ text_to_speech.set_service_url(ck.watson_url)
 # Stream Listener for real time tweet extraction
 class StreamListener(tweepy.streaming.StreamListener):
     def on_status(self, status):
-        s.connect((serverIP, serverPort))
-        print("Connecting to " + serverIP + " on port " + str(serverPort))
         print("Listening for tweets from Twitter API that contain questions")
 
         parsed = re.findall(r'\'(.+?)\'',status.text)
@@ -99,7 +99,8 @@ class StreamListener(tweepy.streaming.StreamListener):
             play_obj = wave_obj.play()
             play_obj.wait_done()
         #Ending Session
-        s.close()
+        print('Client finished current tweet.')
+        #s.close()
 
 
 if __name__ == '__main__':
@@ -126,6 +127,9 @@ if __name__ == '__main__':
         if not serverPort or not serverIP or not socketSize:
             print('ERROR: INVALID ARGUMENT FLAGS. Specify -sip <SERVER_IP> -sp <SERVER_PORT> -z <SOCKET_SIZE>.')
             sys.exit()
+        
+        s.connect((serverIP, serverPort))
+        print("Connecting to " + serverIP + " on port " + str(serverPort))
 
         """
         *** TWITTER STREAM LISTENER
@@ -134,12 +138,14 @@ if __name__ == '__main__':
         auth = tweepy.OAuthHandler(ck.twitter_api_key, ck.twitter_secret_api_key)
         auth.set_access_token(ck.twitter_token, ck.twitter_secret_token)
         twitter_api = tweepy.API(auth)
+        
 
         # Initialize Stream
         sl = StreamListener()
         stream = tweepy.Stream(auth = twitter_api.auth, listener = sl)
         tags = ['#ECE4564T23']
         stream.filter(track=tags)
+
         """
         *** END TWITTER STREAM LISTENER
         """
