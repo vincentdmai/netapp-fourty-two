@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# python .\server.py  -sp 50000 -z 1024
+# Vincent Mai, Justin Nguyen, Malik Eleman
 
 import ServerKeys as sk
 import sys
@@ -17,7 +19,7 @@ from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 """
 *** GLOBALS ****
 """
-
+#TODO always check IP4 connection matches with server IP
 serverIP = '192.168.0.121'
 serverPort = None
 socketSize = None
@@ -54,16 +56,16 @@ def wolfram_get_answer(question):
 
 def run_server():
     s.listen()
-    print("Listening for client connections")
+    print("[Server 02] – Listening for client connections")
     client, address = s.accept()
-    print("Accepted client connection from " + str(address) + " on port " + str(client.getsockname()))
+    print("[Server 03] – Accepted client connection from " + str(address) + " on port " + str(client.getsockname()))
     while 1:
         data = client.recv(socketSize)
-        print("Received data: " + str(data))   
+        print("[Server 04] – Received data: " + str(data))   
         if data:
             #Recieving the payload
             key, cipher_text, md5Hash = pickle.loads(data)
-            print("Decrypt Key: " + str(key))
+            print("[Server 05] – Decrypt Key: " + str(key))
             #Check sum
             newmd5Hash = hashlib.md5(cipher_text) #md5 Hash
             if newmd5Hash.digest() != md5Hash:
@@ -75,7 +77,7 @@ def run_server():
 
             #Decoding for raw string
             plain_text = plain_text.decode('utf-8')
-            print("Plain Text: " + plain_text)
+            print("[Server 06] – Plain Text: " + plain_text)
             
             #Creating Audio file name
             audioFile = 'outputServer.wav'
@@ -90,32 +92,32 @@ def run_server():
 
             #Inits the audio object and plays, and waits till audio file is done
             wave_obj = sa.WaveObject.from_wave_file(audioFile)
-            print("Speaking Question: " + plain_text)
+            print("[Server 07] – Speaking Question: " + plain_text)
             play_obj = wave_obj.play()
             play_obj.wait_done() 
 
             #Using Wolfram Alpha to generate an answer string from question
-            print("Sending question to Wolframalpha")
+            print("[Server 08] – Sending question to Wolframalpha")
             ans = wolfram_get_answer(plain_text)
-            print("Received answer from Wolframalpha: " + str(ans))
+            print("[Server 09] – Received answer from Wolframalpha: " + str(ans))
 
             #Creating encryption
             answer_key = Fernet.generate_key()
-            print("Encryption key: " + str(answer_key))
+            print("[Server 10] – Encryption key: " + str(answer_key))
             answer_cipher_suite = Fernet(answer_key)
             answer_cipher_text = answer_cipher_suite.encrypt(ans.encode('utf-8'))
-            print("Cipher Text: " + str(answer_cipher_text))
+            print("[Server 11] – Cipher Text: " + str(answer_cipher_text))
             #plain_text = cipher_suite.decrypt(cipher_text)
             answer_md5Hash = hashlib.md5(answer_cipher_text) #md5 Hash
-            print("Generated MD5 Checksum: " + str(answer_md5Hash.digest()))
+            print("[Server 12] – Generated MD5 Checksum: " + str(answer_md5Hash.digest()))
             #creating pickled payload
-            print("Answer payload: " + str(answer_cipher_text))
+            print("[Server 13] – Answer payload: " + str(answer_cipher_text))
             msg = pickle.dumps((answer_key, answer_cipher_text, answer_md5Hash.digest()))
-            print("Sending answer: " + str(msg))
+            print("[Server 14] – Sending answer: " + str(msg))
 
             #Send data back to client
             client.send(bytes(msg))
-        print('Server successfully send data back to Client.')
+        print('[Server END] – Server successfully sent data back to Client.')
         #client.close()
 
 
@@ -144,7 +146,7 @@ if __name__ == '__main__':
 
         #Binding port to host
         s.bind((serverIP, serverPort))
-        print("Created socket at " + serverIP + " on port " + str(serverPort))
+        print("[Server 01] – Created socket at " + serverIP + " on port " + str(serverPort))
 
         #Run Server
         run_server()

@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# python client.py -sip 192.168.0.121 -sp 50000 -z 1024
+#SIP MUST MATCH IP4
+# Vincent Mai, Justin Nguyen, Malik Eleman
 
 import sys
 import socket
@@ -35,39 +38,39 @@ text_to_speech.set_service_url(ck.watson_url)
 # Stream Listener for real time tweet extraction
 class StreamListener(tweepy.streaming.StreamListener):
     def on_status(self, status):
-        print("Listening for tweets from Twitter API that contain questions")
+        print("[Client 02] – Listening for tweets from Twitter API that contain questions")
 
         parsed = re.findall(r'\'(.+?)\'',status.text)
         tweet_question = parsed[0].strip("'")
 
-        print("New question found: " + tweet_question)
+        print("[Client 03] – New question found: " + tweet_question)
 
         #Creating decryption
         key = Fernet.generate_key()
-        print("Generated Encryption key: " + str(key))
+        print("[Client 04] – Generated Encryption key: " + str(key))
 
         cipher_suite = Fernet(key)
         cipher_text = cipher_suite.encrypt(tweet_question.encode('utf-8'))
-        print("Cipher Text: " + str(cipher_text))
+        print("[Client 05] – Cipher Text: " + str(cipher_text))
 
         #plain_text = cipher_suite.decrypt(cipher_text)
         md5Hash = hashlib.md5(cipher_text) #md5 Hash
-        print("Question payload: " + str(md5Hash.digest()))
+        print("[Client 06] – Question payload: " + str(md5Hash.digest()))
         
         #creating pickled payload
         msg = pickle.dumps((key, cipher_text, md5Hash.digest()))
 
         #Connecting to server and sending payload
-        print("Sending Question: " + str(msg))
+        print("[Client 07] – Sending Question: " + str(msg))
         s.send(bytes(msg))
 
         #Recieving new PayLoad
         data = s.recv(socketSize)
-        print("Received data: " + str(data))
+        print("[Client 08] – Received data: " + str(data))
         if data:
             #Recieving the payload
             answer_key, answer_cipher_text, answer_md5Hash = pickle.loads(data)
-            print("Decrypt Key: " + str(answer_key))
+            print("[Client 09] – Decrypt Key: " + str(answer_key))
 
             #Check sum
             newmd5Hash = hashlib.md5(answer_cipher_text) #md5 Hash
@@ -80,7 +83,7 @@ class StreamListener(tweepy.streaming.StreamListener):
 
             #Decoding for raw string
             plain_text = plain_text.decode('utf-8')
-            print("Plain Text: " + plain_text)
+            print("[Client 10] – Plain Text: " + plain_text)
 
             #Creating Audio file name
             audioFile = 'client_outputAnswer.wav'
@@ -95,11 +98,11 @@ class StreamListener(tweepy.streaming.StreamListener):
 
             #Inits the audio object and plays, and waits till audio file is done
             wave_obj = sa.WaveObject.from_wave_file(audioFile)
-            print("Speaking answer: " + plain_text)
+            print("[Client 11] – Speaking answer: " + plain_text)
             play_obj = wave_obj.play()
             play_obj.wait_done()
         #Ending Session
-        print('Client finished current tweet.')
+        print('[Client END] – Client finished current tweet.')
         #s.close()
 
 
@@ -129,7 +132,7 @@ if __name__ == '__main__':
             sys.exit()
         
         s.connect((serverIP, serverPort))
-        print("Connecting to " + serverIP + " on port " + str(serverPort))
+        print("[Client 01] – Connecting to " + serverIP + " on port " + str(serverPort))
 
         """
         *** TWITTER STREAM LISTENER
